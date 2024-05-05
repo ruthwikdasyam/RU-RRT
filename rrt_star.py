@@ -259,6 +259,11 @@ def rrt_star(start, goal):
                     i.c2c = new_node.c2c + dist
                     difference = i.c2c - (new_node.c2c + dist)
 
+                    # add the node as child of the new node
+                    data[new_node.state].children.append(i.state)
+                    # remove the node from the children of the parent node
+                    data[i.parent].children.remove(i.state)
+
                     # pygame.draw.circle(window, (0, 255, 0), new_node.state, 1.5)
                     pygame.draw.line(window, blue, i.state, i.parent)
                     pygame.display.flip()
