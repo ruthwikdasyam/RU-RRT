@@ -7,7 +7,7 @@ class Node:
         self.state = state
         self.parent = parent
         self.c2c = c2c
-        self.children = []
+        self.children = set()
     
     def __repr__(self) -> str:
         return f"({self.state}, {self.parent}, {self.c2c})"
@@ -232,7 +232,7 @@ def rrt_star(start, goal):
         # add the new node to the data dictionary
         data[rand_point1] = new_node
         # add the new node to the children of the parent node
-        data[new_node.parent].children.append(new_node.state)
+        data[new_node.parent].children.add(new_node.state)
 
 
         # draw the new node and parent node and line between them
@@ -260,7 +260,7 @@ def rrt_star(start, goal):
                     difference = i.c2c - (new_node.c2c + dist)
 
                     # add the node as child of the new node
-                    data[new_node.state].children.append(i.state)
+                    data[new_node.state].children.add(i.state)
                     # remove the node from the children of the parent node
                     data[i.parent].children.remove(i.state)
 
