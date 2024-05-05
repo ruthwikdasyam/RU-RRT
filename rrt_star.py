@@ -58,7 +58,9 @@ def find_nearest_c2c(rand_point1, graph):
         dist = np.sqrt((rand_point1[0] - node.state[0])**2 + (rand_point1[1] - node.state[1])**2)
         if dist <= NODE_RADIUS:
             neigh_nodes.append(node)
-    return (neigh_nodes, min(neigh_nodes))
+    
+    neigh_nodes.sort(key=lambda node: node.c2c)        
+    return neigh_nodes
 
 def find_nearest_node(rand_point, graph):
     temp_dist = []
@@ -107,6 +109,11 @@ def back_track(graph):
     return path
 
 
+def distance(state1, state2):
+    dist = np.sqrt((state1[0]-state1[0]))
+
+
+
 def rrt_star(start, goal):
     global step
     global goal_threshold
@@ -135,22 +142,28 @@ def rrt_star(start, goal):
             continue
         
         # Find nearest node with less c2c
-        if len(graph) > 1:
-            neighs, nearest_c2c = find_nearest_c2c(rand_point1, graph)
-        else:    
-            nearest_c2c = None
-            neighs = []
+        
+        neighs = find_nearest_c2c(rand_point1, graph)
+        # else:    
+            # neighs = []
 
         # Add the new node to the graph with less c2c as parent
-        if nearest_c2c:
-            new_node = Node(rand_point1, nearest_c2c.state, nearest_c2c.c2c+step) 
-        else:
-            new_node = Node(rand_point1, nearest_node.state, nearest_node.c2c+step)
+        for i in neighs:
+            path_ok = path_check(rand_point1, i.state)
+            if path_ok:
+                new_node = Node(rand_point1, i.state, i.c2c+step)
+                break
+
+
+        # if len(neighs)>0:
+        #     new_node = Node(rand_point1, nearest_c2c.state, nearest_c2c.c2c+step)
+        # else:
+        #     new_node = Node(rand_point1, nearest_node.state, nearest_node.c2c+step)
 
         # check if the path to the new node is in obstacle space and continue if true
-        path_ok = path_check(new_node.state, new_node.parent)
-        if not path_ok:
-            continue
+        # path_ok = path_check(new_node.state, new_node.parent)
+        # if not path_ok:
+        #     continue
 
         graph.append(new_node)
 
