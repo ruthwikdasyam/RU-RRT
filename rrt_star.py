@@ -57,10 +57,11 @@ def find_neigh(rand_point1, graph, node_radius):
     for node in graph:
         dist = np.sqrt((rand_point1[0] - node.state[0])**2 + (rand_point1[1] - node.state[1])**2)
         if dist <= node_radius:
-            neigh_nodes.append(node)
+            neigh_nodes.append((node, dist+node.c2c))
     
-    neigh_nodes.sort(key=lambda node: node.c2c)        
-    return neigh_nodes
+    neigh_nodes.sort(key=lambda x:x[1])   
+    # neigh_nodes=neigh_nodes[]     
+    return [node for node, _ in neigh_nodes]
 
 def find_nearest_node(rand_point, graph):
     temp_dist = []
@@ -98,9 +99,9 @@ def get_new_point(rand_point, nearest_node, step):
     y = nearest_node[1] + step*np.sin(theta)
     return (int(x), int(y))
  
-def back_track(graph):
+def back_track(graph, node):
     path = []
-    node = graph[-1]
+    # node = graph[-1]
     while node.state!=start:
         path.append(node.state)
         node = [i for i in graph if i.state == node.parent][0]
@@ -113,6 +114,10 @@ def distance(state1, state2):
     dist = np.sqrt((state1[0]-state2[0])**2+(state1[1]-state2[1])**2)
     return dist
 
+def print_path(path, color):
+    for i in range(len(path)-1):
+        pygame.draw.line(window, color, path[i], path[i+1])
+        pygame.display.flip()
 
 
 # ____________________ Display Pygame Window _______________________
@@ -146,8 +151,8 @@ pygame.display.flip() #updating window
 start = (200,150)
 goal = (500,150)
 # print("Error") if matrix[start[0], start[1]]!=0 or matrix[goal[0], goal[1]]!=0 else None
-node_radius = 10
-rewire_radius = 30
+node_radius = 15
+rewire_radius = 20
 
 step = 7
 goal_threshold = 8
@@ -167,6 +172,8 @@ def rrt_star(start, goal):
     graph.append(start_node)
 
     n=0
+
+    goal_reached = False
     while True:
         # Generate random node
         rand_point = (np.random.randint(0,599), np.random.randint(0,399))
@@ -178,6 +185,9 @@ def rrt_star(start, goal):
         rand_point1 = get_new_point(rand_point, nearest_node.state, step)
         
         # check if the point is in obstacle space and continue if true
+        if not 0<= rand_point1[0] < 600 or not 0<= rand_point1[1] < 400:
+            continue
+
         if matrix[rand_point1[0], rand_point1[1]]!=0:
             continue
        
@@ -195,7 +205,7 @@ def rrt_star(start, goal):
         for i in neighs:
             path_ok = path_check(rand_point1, i.state)
             if path_ok:
-                new_node = Node(rand_point1, i.state, i.c2c+step)
+                new_node = Node(rand_point1, i.state, i.c2c+distance(rand_point1, i.state))
                 break
 
 
@@ -212,9 +222,9 @@ def rrt_star(start, goal):
         graph.append(new_node)
 
         # draw the new node and parent node and line between them
-        pygame.draw.circle(window, blue, new_node.state, 2)
-        pygame.draw.circle(window, blue, new_node.parent, 2)
-        # pygame.draw.line(window, grey, new_node.state, new_node.parent)
+        pygame.draw.circle(window, grey, new_node.state, 2)
+        # pygame.draw.circle(window, blue, new_node.parent, 2)
+        pygame.draw.line(window, blue, new_node.state, new_node.parent)
         pygame.display.flip()
 
 
@@ -229,20 +239,40 @@ def rrt_star(start, goal):
                 # check if path possible
                 path_ok1 = path_check(i.state, new_node.state)
                 if path_ok1:
+                    pygame.draw.line(window, white, i.state, i.parent)
+
                     i.parent = new_node.state
                     i.c2c = new_node.c2c + dist
-                    pygame.draw.circle(window, (0, 255, 0), new_node.state, 1.5)
-                    # pygame.draw.line(window, red, new_node.state, i.state)
+                    # pygame.draw.circle(window, (0, 255, 0), new_node.state, 1.5)
+                    pygame.draw.line(window, blue, i.state, i.parent)
                     pygame.display.flip()
 
              
         # check if the point is in the goal region and back track
-        if np.sqrt((rand_point1[0] - goal[0])**2 + (rand_point1[1] - goal[1])**2) <= goal_threshold:
-            print("Goal Reached")
-            path = back_track(graph)
+        if not goal_reached:
+            if np.sqrt((rand_point1[0] - goal[0])**2 + (rand_point1[1] - goal[1])**2) <= goal_threshold:
+                print("Goal Reached")
+                path = back_track(graph, new_node)
+                print_path(path, black)
+                goal_node = new_node
+                goal_cost = goal_node.c2c
+                print(goal_cost)
+                extra_n=0
+                no_prints = 0
+                goal_reached = True
             
+        if goal_reached:
+            extra_n += 1
+            if extra_n == 200:
+                no_prints+=1
+                extra_n = 0
+                print_path(path, blue)
+                path = back_track(graph, goal_node)
+                print_path(path, black)
+                print(goal_node.c2c)
             
-            return path, graph
+            if no_prints ==20:
+                return path, graph
 
         # n +=1
         # if n == 250:
@@ -291,15 +321,13 @@ path, graph = rrt_star(start, goal)
 # rrt_star(start, goal)
 
 # ____ Draw the explored Graph ______
-for i in graph[1:]:             # skipping the start node, it has no parent
-    pygame.draw.line(window, (0, 0, 255), i.state, i.parent)
-    pygame.display.flip()
+# for i in graph[1:]:             # skipping the start node, it has no parent
+#     pygame.draw.line(window, (0, 0, 255), i.state, i.parent)
+#     pygame.display.flip()
     # time.sleep(0.1)
 
 # ____ Draw the path ______
-for i in range(len(path)-1):
-    pygame.draw.line(window, (0, 0, 0), path[i], path[i+1])
-    pygame.display.flip()
+
 # ____________________ End of RRT* Algorithm _______________________
 
 
