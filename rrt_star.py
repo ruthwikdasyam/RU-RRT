@@ -7,6 +7,7 @@ class Node:
         self.state = state
         self.parent = parent
         self.c2c = c2c
+        self.children = []
     
     def __repr__(self) -> str:
         return f"({self.state}, {self.parent}, {self.c2c})"
@@ -114,6 +115,12 @@ def distance(state1, state2):
     dist = np.sqrt((state1[0]-state2[0])**2+(state1[1]-state2[1])**2)
     return dist
 
+def update_children_costs(data, node, difference):
+    for child in node.children:
+        data[child].c2c -= difference
+        update_children_costs(data, data[child], difference)
+
+
 def print_path(path, color):
     for i in range(len(path)-1):
         pygame.draw.line(window, color, path[i], path[i+1])
@@ -171,7 +178,8 @@ def rrt_star(start, goal):
     graph=[]
     graph.append(start_node)
 
-    n=0
+    data = {}
+    data[start] = start_node
 
     goal_reached = False
     while True:
@@ -221,6 +229,12 @@ def rrt_star(start, goal):
 
         graph.append(new_node)
 
+        # add the new node to the data dictionary
+        data[rand_point1] = new_node
+        # add the new node to the children of the parent node
+        data[new_node.parent].children.append(new_node.state)
+
+
         # draw the new node and parent node and line between them
         pygame.draw.circle(window, grey, new_node.state, 2)
         # pygame.draw.circle(window, blue, new_node.parent, 2)
@@ -243,10 +257,13 @@ def rrt_star(start, goal):
 
                     i.parent = new_node.state
                     i.c2c = new_node.c2c + dist
+                    difference = i.c2c - (new_node.c2c + dist)
+
                     # pygame.draw.circle(window, (0, 255, 0), new_node.state, 1.5)
                     pygame.draw.line(window, blue, i.state, i.parent)
                     pygame.display.flip()
 
+                    update_children_costs(data, i, difference)
              
         # check if the point is in the goal region and back track
         if not goal_reached:
@@ -280,37 +297,6 @@ def rrt_star(start, goal):
 
 # _____________________ End of RRT* Algorithm __________________________
 
-
-
-
-
-
-
-# # ____________________ Display Pygame Window _______________________
-# pygame.init()
-# #initializing color
-# white=(230,230,230)
-# black = (0,0,0)
-# grey = (150,150,150)
-# red = (225,50,50)
-# blue = (105,135,235)
-# #initializing window
-# window = pygame.display.set_mode((600,400)) # window size
-# window.fill(white) # filling it with color
-
-
-# # LOOP to transform matrix into this window
-# for i in range(600):
-#     for j in range(400):
-#             if matrix[i,j]==1: # 1 -> red color showing obstacles
-#                 window.set_at((i,j),red)
-#             elif matrix[i,j]==2: # 2-> black showing bloating part
-#                 window.set_at((i,j),black)
-#             elif matrix[i,j]==5:
-#                 window.set_at((i,j),grey)
-
-# pygame.display.flip() #updating window
-# # ____________________ End of Display Pygame Window _______________________
 
 
 
