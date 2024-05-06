@@ -7,6 +7,12 @@ class Node:
         self.state = state
         self.parent = parent
         self.c2c = c2c
+        # if self.parent is None:
+        #     self.step = 0
+        #     self.c2c = 0
+        # else:
+        #     self.step = distance(self.state, self.parent)
+        #     self.c2c = data[self.parent].c2c + self.step
         self.children = set()
     
     def __repr__(self) -> str:
@@ -52,6 +58,26 @@ for i in range(600):                    # looping through all elements in matrix
 
 
 # _____________________ RRT* Algorithm __________________________
+def get_random_state(graph):
+    # Select a random point
+    rand_point = (np.random.randint(0,599), np.random.randint(0,399))
+    # find the nearest node to the random point
+    temp_dist = []
+    for i in graph:
+        dist = distance(rand_point, i.state)
+        # angle = np.arctan2(randnode[1] - i.state[1], randnode[0] - i.state[0])
+        temp_dist.append(dist)
+    index = temp_dist.index(min(temp_dist))
+    # return graph[index]
+    # find the new point in the direction of the random point
+    nearest_state = graph[index].state
+    theta = np.arctan2(rand_point[1] - nearest_state[1], rand_point[0] - nearest_state[0])
+    x = nearest_state[0] + step*np.cos(theta)
+    y = nearest_state[1] + step*np.sin(theta)
+    return (int(x), int(y))
+
+
+
 def find_neigh(rand_point1, graph, node_radius):
     # global NODE_RADIUS
     neigh_nodes = []
@@ -64,14 +90,8 @@ def find_neigh(rand_point1, graph, node_radius):
     # neigh_nodes=neigh_nodes[]     
     return [node for node, _ in neigh_nodes]
 
-def find_nearest_node(rand_point, graph):
-    temp_dist = []
-    for i in graph:
-        dist = np.sqrt((rand_point[0] - i.state[0])**2 + (rand_point[1] - i.state[1])**2)
-        # angle = np.arctan2(randnode[1] - i.state[1], randnode[0] - i.state[0])
-        temp_dist.append(dist)
-    index = temp_dist.index(min(temp_dist))
-    return graph[index]
+
+
 
 def path_check(point, parent):
     # if slope is infinite -- vertical line
@@ -91,7 +111,6 @@ def path_check(point, parent):
 
 
 def get_new_point(rand_point, nearest_node, step):
-    dist = np.sqrt((rand_point[0] - nearest_node[0])**2 + (rand_point[1] - nearest_node[1])**2)
     # if dist<=step:
     #     return rand_point # since step changed, it is less than the original step
     # else:
@@ -163,6 +182,7 @@ rewire_radius = 20
 
 step = 7
 goal_threshold = 8
+data = {}
 
 pygame.draw.circle(window, (255,0,0), start, 5)
 pygame.draw.circle(window, (0,0,0), goal, 5)
@@ -178,24 +198,23 @@ def rrt_star(start, goal):
     graph=[]
     graph.append(start_node)
 
-    data = {}
+    global data
     data[start] = start_node
 
     goal_reached = False
     while True:
         # Generate random node
-        rand_point = (np.random.randint(0,599), np.random.randint(0,399))
 
         # Find nearest node
-        nearest_node = find_nearest_node(rand_point, graph)
+        rand_point1 = get_random_state(graph)
 
         # find new point in corresponding direction
-        rand_point1 = get_new_point(rand_point, nearest_node.state, step)
         
         # check if the point is in obstacle space and continue if true
         if not 0<= rand_point1[0] < 600 or not 0<= rand_point1[1] < 400:
             continue
 
+        # check if the point is in obstacle space and continue if true
         if matrix[rand_point1[0], rand_point1[1]]!=0:
             continue
        
@@ -213,7 +232,7 @@ def rrt_star(start, goal):
         for i in neighs:
             path_ok = path_check(rand_point1, i.state)
             if path_ok:
-                new_node = Node(rand_point1, i.state, i.c2c+distance(rand_point1, i.state))
+                new_node = Node(rand_point1, i.state, i.c2c+distance(rand_point1, i.state)) 
                 break
 
 
@@ -255,14 +274,15 @@ def rrt_star(start, goal):
                 if path_ok1:
                     pygame.draw.line(window, white, i.state, i.parent)
 
-                    i.parent = new_node.state
-                    i.c2c = new_node.c2c + dist
-                    difference = i.c2c - (new_node.c2c + dist)
-
-                    # add the node as child of the new node
-                    data[new_node.state].children.add(i.state)
                     # remove the node from the children of the parent node
                     data[i.parent].children.remove(i.state)
+                    # add the node as child of the new node
+                    data[new_node.state].children.add(i.state)
+
+                    difference = i.c2c - (new_node.c2c + dist)
+
+                    i.parent = new_node.state
+                    i.c2c = new_node.c2c + dist
 
                     # pygame.draw.circle(window, (0, 255, 0), new_node.state, 1.5)
                     pygame.draw.line(window, blue, i.state, i.parent)
