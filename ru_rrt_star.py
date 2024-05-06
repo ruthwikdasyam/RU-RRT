@@ -63,6 +63,14 @@ pygame.display.flip() #updating window
 
 
 #-------------------------------------------------------------------------
+# Creating local flow matrix
+local_matrix = np.zeros((600,400))
+# import flow_matrix
+global_matrix = np.load('flow_matrix.npy', allow_pickle=True)
+query_trees = np.load('query_trees.npy', allow_pickle=True)
+
+# _____________________ Defining Start and Goal __________________________
+
 start = (200,150)
 goal = (500,150)
 # print("Error") if matrix[start[0], start[1]]!=0 or matrix[goal[0], goal[1]]!=0 else None
@@ -77,6 +85,22 @@ pygame.draw.circle(window, (255,0,0), start, 5)
 pygame.draw.circle(window, (0,0,0), goal, 5)
 #----------------------------------------------------------------------------------------------------------------
 
+# deleting branches of the focus node
+def delete_branches(node, graph, node_dict):
+    for child in node.children:
+        delete_branches(node_dict[child], graph, node_dict)
+    graph.remove(node)
+    del node_dict[node.state]
+
+
+# adding tree to the graph
+def add_tree(other_map, start, graph, node_dict):
+    # add all the nodes of other map dict to  node_dict
+    for i in other_map[start].children:
+        node_dict[i] = other_map[i]
+        graph.append(other_map[i])
+        add_tree(other_map, i, graph, node_dict)
+    
 
 
 
@@ -157,8 +181,8 @@ def rrt_star(start, goal):
         pygame.display.flip()
 
 
-
         neighs = find_neigh(rand_point1, graph, rewire_radius)
+
         # Rewire the graph
         for i in neighs:
             if i.state == new_node.parent:
@@ -216,14 +240,78 @@ def rrt_star(start, goal):
         # if n == 250:
         #    break
 
+        # Reuse RRT* Algorithm____________________________________________________
+
+        if new_node.great_grand_parent(node_dict):
+            focus_state = new_node.great_grand_parent(node_dict)
+            focus_node = node_dict[focus_state]
+            # checking eligibility for flow
+            if focus_node.flow_value() is not None:
+                focus_node_flow = focus_node.flow_value() # get flow value of the focus node, check if we need to take node or its parent !!!
+                # Get quotient of the flow value
+                focus_node_flow_ = focus_node_flow//15
+                # checking sub tree size of the focus node
+                sub_tree_size = focus_node.sub_tree_size()
+
+                probable_trees=[]
+                flow_check_radius = 10
+                # get list of all states in the flow check radius fom the focus state
+                for i in range(focus_state[0]-flow_check_radius, focus_state[0]+flow_check_radius):
+                    for j in range(focus_state[1]-flow_check_radius, focus_state[1]+flow_check_radius):
+                        if 0<=i<600 and 0<=j<400:
+                            radius = np.sqrt((i-focus_state[0])**2 + (j-focus_state[1])**2)
+                            if radius <= flow_check_radius:
+                                probable_trees.append([global_matrix[i, j, focus_node_flow_], (i, j)])
+                
+                # [ [map 2, 265], (i , j) ]
+
+                best_tree = max(probable_trees, key=lambda x: x[0][1])
+                
+                # checking if its helpful to add the best tree to current tree
+                if best_tree[0][1] < 1.2*sub_tree_size:
+                    best_tree = None
+
+                # checking if best tree is None
+                if best_tree is None:
+                    # if not, add the node_flow to the local matrix
+                    local_matrix[focus_state[0], focus_state[1]] = (focus_node_flow, sub_tree_size)
+                else:
+                    # if yes, add the best tree to the local tree
+                    #delete all branches of the focus node in the graph
+                    delete_branches(focus_node, graph, node_dict)        # check if we aew deleting the focus node too !!!!
+                    # update focus node
+                    node_dict[focus_node.parent].state = best_tree[1]   # check cost once !!!
+                    graph.append(best_tree[1])
+
+                    reusemap_ID = best_tree[0][0] # get the map ID of the best tree
+                    other_map = query_trees[reusemap_ID] # get the dict of that map
+
+                    # add the best tree to the graph from start node - (i,j) match 
+                    add_tree(other_map, best_tree[1], graph, node_dict) # add_tree(tree, start, new_node, graph, node_dict)
+
+
+
 # _____________________ End of RRT* Algorithm __________________________
 
+#______________________ saving node_dict   _______________________
+# get the index for which the query_trees is empty
+query_id = np.where(query_trees == None)[0][0]
+query_trees[query_id] = node_dict
 
+
+# update flow_matrix with local_matrix
+# global_matrix = np.load('flow_matrix.npy')
+
+for i in range(600):
+    for j in range(400):
+        if local_matrix[i,j] != 0: # if the local matrix is not empty
+            k = local_matrix[i,j][0]//15 # quotient of the flow value
+            global_matrix[i,j,k] = [query_id, local_matrix[i,j][1]] # [query_id, sub_tree_size]
+# save the global_matrix
+np.save('flow_matrix.npy', global_matrix)
 
 
 # ____________________ RRT* Algorithm _______________________
-
-
 path, graph = rrt_star(start, goal)
 # rrt_star(start, goal)
 
