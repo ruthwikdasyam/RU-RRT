@@ -10,6 +10,7 @@ class Node:
         self.state = state
         self.parent = parent
         self.c2c = c2c
+        self.ext = 0
         # if self.parent is None:
         #     self.step = 0
         #     self.c2c = 0
@@ -138,12 +139,15 @@ def get_new_point(rand_point, nearest_node, step):
     y = nearest_node[1] + step*np.sin(theta)
     return (int(x), int(y))
  
-def back_track(graph, node, start):
+def back_track(node_dict, node, start):
     path = []
     # node = graph[-1]
     while node.state!=start:
         path.append(node.state)
-        node = [i for i in graph if i.state == node.parent][0]
+        print("backtracking error: ", node)
+        parent_here = node_dict[node.state].parent
+        node = node_dict[parent_here]
+        
     path.append(start)
     path.reverse()
     return path

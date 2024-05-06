@@ -8,12 +8,12 @@ query_trees = np.load('query_trees.npy', allow_pickle=True)
 # query_id = np.where(query_trees == None)[0][0]
 
 # query_trees[query_id] = node_dict
-# print(query_trees[0][(223, 178)])
-# print(query_trees[0][(223, 178)].children)
+print(query_trees[0][(447, 256)])
+print(query_trees[0][(447, 256)].children)
 # print(query_trees[0][(216, 173)].children)
 # print(query_trees[0][(231, 182)])
 
-print(query_trees[2])
+# print(query_trees[2])
 
 
 

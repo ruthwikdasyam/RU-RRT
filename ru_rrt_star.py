@@ -1,4 +1,5 @@
 from rrt_star_utils import *
+import copy
 
 
 # _____________________ Defining Obstacle Space __________________________
@@ -76,7 +77,7 @@ query_trees = np.load('query_trees.npy', allow_pickle=True)
 
 # _____________________ Defining Start and Goal __________________________
 
-start = (200,150)
+start = (100,350)
 goal = (500,150)
 # print("Error") if matrix[start[0], start[1]]!=0 or matrix[goal[0], goal[1]]!=0 else None
 node_radius = 15
@@ -91,43 +92,58 @@ pygame.draw.circle(window, (0,0,0), goal, 5)
 #----------------------------------------------------------------------------------------------------------------
 
 # deleting branches of the focus node
-def delete_branches(node, graph, node_dict):
-    for child in node.children:
-        delete_branches(node_dict[child], graph, node_dict)
-    graph.remove(node)
+def delete_branches(node, node_dict):
+    for child in node.children:        
+        delete_branches(node_dict[child], node_dict)
+    # graph.remove(node)
+    pygame.draw.line(window, white, node.state, node.parent)
     del node_dict[node.state]
 
 
-# adding tree to the graph
-def add_tree(other_map, start, diff_in_c2c, graph, node_dict, new_tree_states):
+# adding tree to the node dict
+def add_tree(other_map, start, diff_in_c2c, node_dict, new_tree_states):
     # add all the nodes of other map dict to  node_dict
     for i in other_map[start].children:
-        print("adding")
+        print("adding  ",len(other_map[start].children))
         print(i)
         print(other_map[i])
         # adding to current node_dict
-        node_dict[i] = other_map[i]
-        # updating costs
-        node_dict[i].c2c -= diff_in_c2c
-        # appending to graph
-        graph.append(node_dict[i])
-        new_tree_states.append(node_dict[i].state)
-        pygame.draw.line(window, (100, 250, 50), node_dict[i].state, node_dict[i].parent)
+        # node_dict[i] = Node(i, other_map[i].parent, other_map[i].c2c)
+        try:
+            if node_dict[i]:
+                # delete this chilren for its parent
+                need_to_update_parent_state = other_map[i].parent
+                node_dict[need_to_update_parent_state].children.remove(node_dict[i].state) 
+
+
+                continue
+        except KeyError:
+
+
+            node_dict[i] = copy.deepcopy(other_map[i])
+            node_dict[i].ext = 1
+            # updating costs
+            node_dict[i].c2c -= diff_in_c2c
+            # appending to graph
+            # graph.append(node_dict[i])
+            new_tree_states.append(node_dict[i].state)
+            pygame.draw.line(window, (100, 250, 50), node_dict[i].state, node_dict[i].parent)
         
-        add_tree(other_map, i, diff_in_c2c, graph, node_dict, new_tree_states)
+        add_tree(other_map, i, diff_in_c2c, node_dict, new_tree_states)
 
     return new_tree_states
     
 
-
+focus_nodes_list=[]
+cleared_trees_list=[]
 
 def rrt_star(start, goal):
     global step
     global goal_threshold
     start_node = Node(start, None, 0)
 
-    graph=[]
-    graph.append(start_node)
+    # graph=[]
+    # graph.append(start_node)
 
     global node_dict
     node_dict[start] = start_node
@@ -135,8 +151,10 @@ def rrt_star(start, goal):
     goal_reached = False
     n=0
     while True:
-        # Generate random node
+        # generate a list with node_dict values
+        graph = list(node_dict.values())
 
+        # Generate random node
         # Find nearest node
         rand_point1 = get_random_state(graph, step)
 
@@ -180,7 +198,7 @@ def rrt_star(start, goal):
         # if not path_ok:
         #     continue
 
-        graph.append(new_node)
+        # graph.append(new_node)
 
         # if no children to parent add generation to the parent node
         # if len(node_dict[new_node.parent].children) == 0:
@@ -214,6 +232,9 @@ def rrt_star(start, goal):
                 if path_ok1:
                     pygame.draw.line(window, white, i.state, i.parent)
 
+                    print("parent error: ", node_dict[i.parent])
+                    print(node_dict[i.parent].children)
+                    print("state error: ", node_dict[i.state])
                     # remove the node from the children of the parent node
                     node_dict[i.parent].children.remove(i.state)
                     # add the node as child of the new node
@@ -234,7 +255,7 @@ def rrt_star(start, goal):
         if not goal_reached:
             if in_goal_radius(rand_point1, goal, goal_threshold):
                 print("Goal Reached")
-                path = back_track(graph, new_node, start)
+                path = back_track(node_dict, new_node, start)
                 print_path(path, black, window)
                 goal_node = new_node
                 goal_cost = goal_node.c2c
@@ -249,12 +270,12 @@ def rrt_star(start, goal):
                 no_prints+=1
                 extra_n = 0
                 print_path(path, blue, window)
-                path = back_track(graph, goal_node, start)
+                path = back_track(node_dict, goal_node, start)
                 print_path(path, black, window)
                 print(goal_node.c2c)
             
             if no_prints ==10:
-                return path, graph
+                return path
 
         # n +=1
         # if n == 250:
@@ -266,8 +287,15 @@ def rrt_star(start, goal):
             focus_state = new_node.great_grand_parent(node_dict)
             # print(focus_state)
             focus_node = node_dict[focus_state]
+
             # checking if it has parent
             if focus_node.parent is not None:
+             if focus_node.ext == 0:  
+            #   print("focus node  ", focus_node)
+            #   print("focus node  parent ", node_dict[focus_node.parent])
+            #   print("focus node  parent ka children ", node_dict[focus_node.parent].children)
+
+
             # checking eligibility for flow
               if focus_node.flow_value(node_dict) is not None:
                 focus_node_flow = focus_node.flow_value(node_dict) # get flow value of the focus node, check if we need to take node or its parent !!!
@@ -301,7 +329,7 @@ def rrt_star(start, goal):
                     best_tree = max(probable_trees, key=lambda x: x[0][1])
                     
                     # checking if its helpful to add the best tree to current tree
-                    if best_tree[0][1] < 1.2*sub_tree_size:
+                    if best_tree[0][1] < 1.5*sub_tree_size:
                         best_tree = None
 
                     # checking if best tree is None
@@ -314,20 +342,39 @@ def rrt_star(start, goal):
 
                     else:
                         print("Added tree")
+                        cleared_trees_list.append(focus_node.state)
+                        focus_node.ext = 1
+
                         # if yes, add the best tree to the local tree
                         #delete all branches of the focus node in the graph
                         focus_parent = focus_node.parent
                         # deleting focus node state from childrens of its parent
-                        node_dict[focus_parent].children.remove(focus_node.state)
-                        delete_branches(focus_node, graph, node_dict)        # check if we we deleting the focus node too !!!!
-                        
-                        
+                        # node_dict[focus_parent].children.remove(focus_node.state)
+                        # print("before deleting branches", node_dict[focus_node.state])
+                        # print("before deleting branches focus node parent ", node_dict[focus_node.parent])
+                        # delete_branches(focus_node, node_dict)       
+                        # print("after deleting branches focus node parent ", node_dict[focus_parent])
+                        # print("after deleting branches", node_dict[focus_node.state])
+                        focus_nodes_list.append(best_tree[1])
+                        # focus_nodes_list.append("ONEIT")
+                        print(focus_nodes_list)
+                        print(cleared_trees_list)
+
+                        # if there is already a tree in the new tree start node, then we will add them to this new tree
+                        try:
+                            if node_dict[best_tree[1]]:
+                                my_old_children = node_dict[best_tree[1]].children
+                                my_old_parent = node_dict[best_tree[1]].parent
+                        except KeyError:
+                            my_old_children = None
+                            pass
+
                         # update focus node
                         new_focus_node = Node(best_tree[1], focus_parent, node_dict[focus_parent].c2c + distance(focus_parent, best_tree[1]))
                         node_dict[new_focus_node.state] = new_focus_node  
-                        graph.append(new_focus_node)
+                        # graph.append(new_focus_node)
                         # adding this new one as child , back to its parent
-                        node_dict[focus_parent].children.add(new_focus_node.state)
+                        node_dict[focus_parent].children.add(best_tree[1])
                         # node_dict[focus_node.state] = focus_node     
 
                         reusemap_ID = best_tree[0][0] # get the map ID of the best tree
@@ -335,17 +382,26 @@ def rrt_star(start, goal):
 
                         diff_in_c2c = other_map[new_focus_node.state].c2c - new_focus_node.c2c
                         # this focus points, children are updated from importing map start node
-                        node_dict[new_focus_node.state].children = other_map[new_focus_node.state].children
+                        node_dict[new_focus_node.state].children = copy.deepcopy(other_map[new_focus_node.state].children)
+                        node_dict[new_focus_node.state].ext = 1
+                        
+                        if my_old_children is not None:
+                            # new_focus_node_actual_parent = node_dict[my].parent
+                            node_dict[my_old_parent].children.remove(best_tree[1])
+
+                            for child in my_old_children:
+                                node_dict[my_old_parent].children.add(child)
+                                node_dict[child].parent = my_old_parent
                          
                         #empty list to store new tree nodes
                         new_tree_states = []
                         # add the best tree to the graph from start node - (i,j) match
-                        add_tree(other_map, new_focus_node.state, diff_in_c2c, graph, node_dict, new_tree_states) # add_tree(tree, start, new_node, graph, node_dict)
+                        add_tree(other_map, new_focus_node.state, diff_in_c2c, node_dict, new_tree_states) # add_tree(tree, start, new_node, graph, node_dict)
                             # need to update the costs and check for goal_reached too
                         for i in new_tree_states:
                             if in_goal_radius(i, goal, goal_threshold):
                                 print("Goal Reached in imported tree :) ")
-                                path = back_track(graph, node_dict[i], start)
+                                path = back_track(node_dict, node_dict[i], start)
                                 print_path(path, black, window)
                                 goal_node = node_dict[i]
                                 goal_cost = goal_node.c2c
@@ -354,16 +410,16 @@ def rrt_star(start, goal):
                                 no_prints = 0
                                 goal_reached = True
 
-        if n==500:
-            break
-        n+=1
+        # if n==1000:
+        #     break
+        # n+=1
 
 # _____________________ End of RRT* Algorithm __________________________
 
 
 # ____________________ RRT* Algorithm _______________________
-# path, graph = rrt_star(start, goal)
-rrt_star(start, goal)
+path = rrt_star(start, goal)
+# rrt_star(start, goal)
 
 # ____ Draw the explored Graph ______
 # for i in graph[1:]:             # skipping the start node, it has no parent
@@ -377,27 +433,27 @@ rrt_star(start, goal)
 
 
 #______________________ saving node_dict   _______________________
-# # get the index for which the query_trees is empty
-# query_id = np.where(query_trees == None)[0][0]
-# query_trees[query_id] = node_dict
-# print(query_id)
-# # save query_trees
-# np.save('query_trees.npy', query_trees)
+# get the index for which the query_trees is empty
+query_id = np.where(query_trees == None)[0][0]
+query_trees[query_id] = node_dict
+print(query_id)
+# save query_trees
+np.save('query_trees.npy', query_trees)
 
-# # update flow_matrix with local_matrix
-# # global_matrix = np.load('flow_matrix.npy')
-# contributions = 0
+# update flow_matrix with local_matrix
+# global_matrix = np.load('flow_matrix.npy')
+contributions = 0
 
-# for i in range(600):
-#     for j in range(400):
-#         if len(local_matrix[i,j]) !=0 : # if the local matrix is not empty
-#             contributions += 1
-#             k = local_matrix[i,j][0]//15 # quotient of the flow value
-#             global_matrix[i,j,k] = [query_id, local_matrix[i,j][1]] # [query_id, sub_tree_size]
-# # save the global_matrix
-# np.save('flow_matrix.npy', global_matrix)
+for i in range(600):
+    for j in range(400):
+        if len(local_matrix[i,j]) !=0 : # if the local matrix is not empty
+            contributions += 1
+            k = local_matrix[i,j][0]//15 # quotient of the flow value
+            global_matrix[i,j,k] = [query_id, local_matrix[i,j][1]] # [query_id, sub_tree_size]
+# save the global_matrix
+np.save('flow_matrix.npy', global_matrix)
 
-# print(contributions)
+print(contributions)
 
 
 
