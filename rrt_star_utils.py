@@ -21,7 +21,7 @@ class Node:
         self.children = set()
     
     def __repr__(self) -> str:
-        return f"({self.state}, {self.parent}, {self.c2c})"
+        return f"({self.state}, {self.parent}, {self.c2c}, {len(self.children)})"
     
     def __lt__(self, other):
         return self.c2c < other.c2c
@@ -172,6 +172,10 @@ def slope(point1, point2):
     deg = math.degrees(rad)  # convert to degrees
     return deg if deg >= 0 else deg + 360
 
+# funcrion to see if rand point is in the goal radius
+def in_goal_radius(rand_point1, goal, goal_threshold):
+    return np.sqrt((rand_point1[0] - goal[0])**2 + (rand_point1[1] - goal[1])**2) <= goal_threshold
+    
 
 # def update_generations(node, node_dict):
 #     parent = node.parent
