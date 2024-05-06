@@ -5,6 +5,7 @@ import math
 
 
 class Node:
+    global node_dict
     def __init__(self, state, parent, c2c):
         self.state = state
         self.parent = parent
@@ -14,8 +15,9 @@ class Node:
         #     self.c2c = 0
         # else:
         #     self.step = distance(self.state, self.parent)
-        #     self.c2c = data[self.parent].c2c + self.step
-        self.gen = 0    # generation number
+        #     self.c2c = node_dict[self.parent].c2c + self.step
+        # self.slope = slope(self.parent, self.state)
+        # self.gen = 0    # generation number
         self.children = set()
     
     def __repr__(self) -> str:
@@ -24,6 +26,49 @@ class Node:
     def __lt__(self, other):
         return self.c2c < other.c2c
 
+    def slope(self):
+        x1, y1 = self.parent
+        x2, y2 = self.child
+        rad = math.atan2(y2 - y1, x2 - x1)  # get the angle in radians
+        deg = math.degrees(rad)  # convert to degrees
+        return deg if deg >= 0 else deg + 360
+    
+
+    # finding flow value of the node
+    def flow_value(self):
+        # number of nodes in next 4 generations
+        slopes = []
+        n=0
+        slopes.append(self.slope()) 
+        for i in self.children:
+            n+=1
+            slopes.append(node_dict[i].slope())
+            for j in node_dict[i].children:
+                n+=1
+                slopes.append(node_dict[j].slope())
+                for k in node_dict[j].children:
+                    n+=1
+                    slopes.append(node_dict[k].slope())
+        if n > 10:
+            flow_value = np.mean(slopes)
+            return int(flow_value)
+        return None
+                        
+    # find number of nodes that are emerging from the node
+    def subtree_size(self):
+        size = 1
+        for child in self.children:
+            size += child.subtree_size()
+        return size
+
+    # get 4th great grand parent of the node
+    def great_grand_parent(self, data):
+        parent = self.parent
+        for i in range(4):
+            if parent is None:
+                return None
+            parent = data[parent].parent
+        return parent
 
 
 
@@ -108,10 +153,10 @@ def distance(state1, state2):
     dist = np.sqrt((state1[0]-state2[0])**2+(state1[1]-state2[1])**2)
     return dist
 
-def update_children_costs(data, node, difference):
+def update_children_costs(node_dict, node, difference):
     for child in node.children:
-        data[child].c2c -= difference
-        update_children_costs(data, data[child], difference)
+        node_dict[child].c2c -= difference
+        update_children_costs(node_dict, node_dict[child], difference)
 
 
 def print_path(path, color, window):
@@ -120,7 +165,7 @@ def print_path(path, color, window):
         pygame.display.flip()
 
 
-def calculate_angle(point1, point2):
+def slope(point1, point2):
     x1, y1 = point1
     x2, y2 = point2
     rad = math.atan2(y2 - y1, x2 - x1)  # get the angle in radians
@@ -128,11 +173,11 @@ def calculate_angle(point1, point2):
     return deg if deg >= 0 else deg + 360
 
 
-def update_generations(node, data):
-    parent = node.parent
-    while parent is not None:
-        data[parent].gen += 1
-        node = data[parent]
-        parent = node.parent
+# def update_generations(node, node_dict):
+#     parent = node.parent
+#     while parent is not None:
+#         node_dict[parent].gen += 1
+#         node = node_dict[parent]
+#         parent = node.parent
 
 

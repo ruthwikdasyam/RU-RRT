@@ -71,7 +71,7 @@ rewire_radius = 20
 
 step = 7
 goal_threshold = 8
-data = {}
+node_dict = {}
 
 pygame.draw.circle(window, (255,0,0), start, 5)
 pygame.draw.circle(window, (0,0,0), goal, 5)
@@ -88,8 +88,8 @@ def rrt_star(start, goal):
     graph=[]
     graph.append(start_node)
 
-    global data
-    data[start] = start_node
+    global node_dict
+    node_dict[start] = start_node
 
     goal_reached = False
     while True:
@@ -139,15 +139,15 @@ def rrt_star(start, goal):
         graph.append(new_node)
 
         # if no children to parent add generation to the parent node
-        if len(data[new_node.parent].children) == 0:
-            data[new_node.parent].gen += 1
-            # update generation of all the parent nodes
-            update_generations(data[new_node.parent], data)
+        # if len(node_dict[new_node.parent].children) == 0:
+        #     node_dict[new_node.parent].gen += 1
+        #     # update generation of all the parent nodes
+        #     update_generations(node_dict[new_node.parent], node_dict)
 
-        # add the new node to the data dictionary
-        data[rand_point1] = new_node
+        # add the new node to the node_dict dictionary
+        node_dict[rand_point1] = new_node
         # add the new node to the children of the parent node
-        data[new_node.parent].children.add(new_node.state)
+        node_dict[new_node.parent].children.add(new_node.state)
 
 
         # draw the new node and parent node and line between them
@@ -171,9 +171,9 @@ def rrt_star(start, goal):
                     pygame.draw.line(window, white, i.state, i.parent)
 
                     # remove the node from the children of the parent node
-                    data[i.parent].children.remove(i.state)
+                    node_dict[i.parent].children.remove(i.state)
                     # add the node as child of the new node
-                    data[new_node.state].children.add(i.state)
+                    node_dict[new_node.state].children.add(i.state)
 
                     difference = i.c2c - (new_node.c2c + dist)
 
@@ -184,7 +184,7 @@ def rrt_star(start, goal):
                     pygame.draw.line(window, blue, i.state, i.parent)
                     pygame.display.flip()
 
-                    update_children_costs(data, i, difference)
+                    update_children_costs(node_dict, i, difference)
              
         # check if the point is in the goal region and back track
         if not goal_reached:
