@@ -78,6 +78,8 @@ pygame.draw.circle(window, (0,0,0), goal, 5)
 #----------------------------------------------------------------------------------------------------------------
 
 
+
+
 def rrt_star(start, goal):
     global step
     global goal_threshold
@@ -135,6 +137,12 @@ def rrt_star(start, goal):
         #     continue
 
         graph.append(new_node)
+
+        # if no children to parent add generation to the parent node
+        if len(data[new_node.parent].children) == 0:
+            data[new_node.parent].gen += 1
+            # update generation of all the parent nodes
+            update_generations(data[new_node.parent], data)
 
         # add the new node to the data dictionary
         data[rand_point1] = new_node

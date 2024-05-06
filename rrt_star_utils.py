@@ -1,6 +1,6 @@
 import pygame
 import numpy as np
-import time
+import math
 
 
 
@@ -15,6 +15,7 @@ class Node:
         # else:
         #     self.step = distance(self.state, self.parent)
         #     self.c2c = data[self.parent].c2c + self.step
+        self.gen = 0    # generation number
         self.children = set()
     
     def __repr__(self) -> str:
@@ -119,9 +120,19 @@ def print_path(path, color, window):
         pygame.display.flip()
 
 
+def calculate_angle(point1, point2):
+    x1, y1 = point1
+    x2, y2 = point2
+    rad = math.atan2(y2 - y1, x2 - x1)  # get the angle in radians
+    deg = math.degrees(rad)  # convert to degrees
+    return deg if deg >= 0 else deg + 360
 
 
-
-
+def update_generations(node, data):
+    parent = node.parent
+    while parent is not None:
+        data[parent].gen += 1
+        node = data[parent]
+        parent = node.parent
 
 
