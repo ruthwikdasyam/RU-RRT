@@ -244,14 +244,17 @@ def rrt_star(start, goal):
 
         if new_node.great_grand_parent(node_dict):
             focus_state = new_node.great_grand_parent(node_dict)
+            # print(focus_state)
             focus_node = node_dict[focus_state]
+            # checking if it has parent
+            if focus_node.parent is not None:
             # checking eligibility for flow
-            if focus_node.flow_value() is not None:
-                focus_node_flow = focus_node.flow_value() # get flow value of the focus node, check if we need to take node or its parent !!!
+              if focus_node.flow_value(node_dict) is not None:
+                focus_node_flow = focus_node.flow_value(node_dict) # get flow value of the focus node, check if we need to take node or its parent !!!
                 # Get quotient of the flow value
                 focus_node_flow_ = focus_node_flow//15
                 # checking sub tree size of the focus node
-                sub_tree_size = focus_node.sub_tree_size()
+                sub_tree_size = focus_node.subtree_size(node_dict) # get subtree size of the focus node
 
                 probable_trees=[]
                 flow_check_radius = 10
@@ -261,34 +264,38 @@ def rrt_star(start, goal):
                         if 0<=i<600 and 0<=j<400:
                             radius = np.sqrt((i-focus_state[0])**2 + (j-focus_state[1])**2)
                             if radius <= flow_check_radius:
+                              if len(global_matrix[i, j, focus_node_flow_]) !=0:
                                 probable_trees.append([global_matrix[i, j, focus_node_flow_], (i, j)])
                 
-                # [ [map 2, 265], (i , j) ]
 
-                best_tree = max(probable_trees, key=lambda x: x[0][1])
-                
-                # checking if its helpful to add the best tree to current tree
-                if best_tree[0][1] < 1.2*sub_tree_size:
-                    best_tree = None
+                # if probable_trees is not empty
+                if len(probable_trees) != 0:
+                    # [ [map 2, 265], (i , j) ]
+                    best_tree = max(probable_trees, key=lambda x: x[0][1])
+                    
+                    # checking if its helpful to add the best tree to current tree
+                    if best_tree[0][1] < 1.2*sub_tree_size:
+                        best_tree = None
 
-                # checking if best tree is None
-                if best_tree is None:
-                    # if not, add the node_flow to the local matrix
-                    local_matrix[focus_state[0], focus_state[1]] = (focus_node_flow, sub_tree_size)
-                else:
-                    # if yes, add the best tree to the local tree
-                    #delete all branches of the focus node in the graph
-                    delete_branches(focus_node, graph, node_dict)        # check if we aew deleting the focus node too !!!!
-                    # update focus node
-                    node_dict[focus_node.parent].state = best_tree[1]   # check cost once !!!
-                    graph.append(best_tree[1])
+                    # checking if best tree is None
+                    if best_tree is None:
+                        # if not, add the node_flow to the local matrix
+                        local_matrix[focus_state[0], focus_state[1]] = (focus_node_flow, sub_tree_size)
+                    else:
+                        # if yes, add the best tree to the local tree
+                        #delete all branches of the focus node in the graph
+                        delete_branches(focus_node, graph, node_dict)        # check if we aew deleting the focus node too !!!!
+                        # update focus node
+                        node_dict[focus_node.parent].state = best_tree[1]   # check cost once !!!
+                        graph.append(best_tree[1])
 
-                    reusemap_ID = best_tree[0][0] # get the map ID of the best tree
-                    other_map = query_trees[reusemap_ID] # get the dict of that map
+                        reusemap_ID = best_tree[0][0] # get the map ID of the best tree
+                        other_map = query_trees[reusemap_ID] # get the dict of that map
 
-                    # add the best tree to the graph from start node - (i,j) match 
-                    add_tree(other_map, best_tree[1], graph, node_dict) # add_tree(tree, start, new_node, graph, node_dict)
-
+                        # add the best tree to the graph from start node - (i,j) match 
+                        add_tree(other_map, best_tree[1], graph, node_dict) # add_tree(tree, start, new_node, graph, node_dict)
+                            # need to update the costs and check for goal_reached too
+                        
 
 
 # _____________________ End of RRT* Algorithm __________________________

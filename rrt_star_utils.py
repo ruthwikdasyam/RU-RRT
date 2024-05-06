@@ -28,14 +28,14 @@ class Node:
 
     def slope(self):
         x1, y1 = self.parent
-        x2, y2 = self.child
+        x2, y2 = self.state
         rad = math.atan2(y2 - y1, x2 - x1)  # get the angle in radians
         deg = math.degrees(rad)  # convert to degrees
         return deg if deg >= 0 else deg + 360
     
 
     # finding flow value of the node
-    def flow_value(self):
+    def flow_value(self, node_dict):
         # number of nodes in next 4 generations
         slopes = []
         n=0
@@ -55,10 +55,10 @@ class Node:
         return None
                         
     # find number of nodes that are emerging from the node
-    def subtree_size(self):
+    def subtree_size(self, node_dict):
         size = 1
         for child in self.children:
-            size += child.subtree_size()
+            size += node_dict[child].subtree_size(node_dict)
         return size
 
     # get 4th great grand parent of the node
