@@ -236,7 +236,8 @@ def rrt_star(start, goal):
                     print(node_dict[i.parent].children)
                     print("state error: ", node_dict[i.state])
                     # remove the node from the children of the parent node
-                    node_dict[i.parent].children.remove(i.state)
+                    if i.state in node_dict[i.parent].children:
+                        node_dict[i.parent].children.remove(i.state)
                     # add the node as child of the new node
                     node_dict[new_node.state].children.add(i.state)
 
