@@ -140,11 +140,12 @@ def get_new_point(rand_point, nearest_node, step):
     return (int(x), int(y))
  
 def back_track(node_dict, node, start):
+    print("Backtracking -------------------------------")
     path = []
     # node = graph[-1]
     while node.state!=start:
         path.append(node.state)
-        print("backtracking error: ", node)
+        # print("backtracking error: ", node)
         parent_here = node_dict[node.state].parent
         node = node_dict[parent_here]
         

@@ -1,6 +1,6 @@
+import time
 from rrt_star_utils import *
 import copy
-
 
 # # _____________________ Defining Obstacle Space - Type 1 __________________________
 # print("\n****************** Map *****************")
@@ -58,7 +58,7 @@ def obstacle(x,y):
         return True
     if x>=420 and x<=480 and y>=460 and y<=520:     # box2.2
         return True       
-    if x>=600 and x<=615 and y>=240 and y<=800:     # line2
+    if x>=600 and x<=615 and y>=640 and y<=800:     # line2
         return True
     if x>=720 and x<=780 and y>=120 and y<=180:     # box3.1
         return True
@@ -122,14 +122,15 @@ query_trees = np.load('query_trees.npy', allow_pickle=True)
 
 # _____________________ Defining Start and Goal __________________________
 
-start = (100,350)
-goal = (500,150)
+start = (400,550)
+# goal = (1070,690)
+goal = (50,100)
 # print("Error") if matrix[start[0], start[1]]!=0 or matrix[goal[0], goal[1]]!=0 else None
 node_radius = 15
-rewire_radius = 20
+rewire_radius = 25
 
 step = 7
-goal_threshold = 8
+goal_threshold = 15
 node_dict = {}
 
 pygame.draw.circle(window, (255,0,0), start, 5)
@@ -149,9 +150,9 @@ def delete_branches(node, node_dict):
 def add_tree(other_map, start, diff_in_c2c, node_dict, new_tree_states):
     # add all the nodes of other map dict to  node_dict
     for i in other_map[start].children:
-        print("adding  ",len(other_map[start].children))
-        print(i)
-        print(other_map[i])
+        # print("adding  ",len(other_map[start].children))
+        # print(i)
+        # print(other_map[i])
         # adding to current node_dict
         # node_dict[i] = Node(i, other_map[i].parent, other_map[i].c2c)
         try:
@@ -159,12 +160,9 @@ def add_tree(other_map, start, diff_in_c2c, node_dict, new_tree_states):
                 # delete this chilren for its parent
                 need_to_update_parent_state = other_map[i].parent
                 node_dict[need_to_update_parent_state].children.remove(node_dict[i].state) 
-
-
                 continue
+
         except KeyError:
-
-
             node_dict[i] = copy.deepcopy(other_map[i])
             node_dict[i].ext = 1
             # updating costs
@@ -195,6 +193,7 @@ def rrt_star(start, goal):
 
     goal_reached = False
     n=0
+    storing_costs=[]
     while True:
         # generate a list with node_dict values
         graph = list(node_dict.values())
@@ -277,9 +276,9 @@ def rrt_star(start, goal):
                 if path_ok1:
                     pygame.draw.line(window, white, i.state, i.parent)
 
-                    print("parent error: ", node_dict[i.parent])
-                    print(node_dict[i.parent].children)
-                    print("state error: ", node_dict[i.state])
+                    # print("parent error: ", node_dict[i.parent])
+                    # print(node_dict[i.parent].children)
+                    # print("state error: ", node_dict[i.state])
                     # remove the node from the children of the parent node
                     if i.state in node_dict[i.parent].children:
                         node_dict[i.parent].children.remove(i.state)
@@ -306,22 +305,32 @@ def rrt_star(start, goal):
                 goal_node = new_node
                 goal_cost = goal_node.c2c
                 print(goal_cost)
+                # store costs 
+                storing_costs.append(goal_node.c2c)
                 extra_n=0
                 no_prints = 0
                 goal_reached = True
             
         if goal_reached:
             extra_n += 1
-            if extra_n == 200:
-                no_prints+=1
+            if extra_n == 70:
+                # no_prints+=1
                 extra_n = 0
                 print_path(path, blue, window)
                 path = back_track(node_dict, goal_node, start)
                 print_path(path, black, window)
-                print(goal_node.c2c)
-            
-            if no_prints ==10:
-                return path
+                print("Cost : ",goal_node.c2c)
+                storing_costs.append(goal_node.c2c)
+
+                if len(storing_costs) >= 10:
+                    # get last 5 costs from the list
+                    last_costs = storing_costs[-10:]
+                    # compute variance of these costs
+                    cost_variance = np.var(last_costs, dtype=np.float32)
+                    
+
+                    if cost_variance < 0.05:
+                        return path
 
         # n +=1
         # if n == 250:
@@ -375,7 +384,7 @@ def rrt_star(start, goal):
                     best_tree = max(probable_trees, key=lambda x: x[0][1])
                     
                     # checking if its helpful to add the best tree to current tree
-                    if best_tree[0][1] < 1.5*sub_tree_size:
+                    if best_tree[0][1] < 1.2*sub_tree_size:
                         best_tree = None
 
                     # checking if best tree is None
@@ -387,7 +396,7 @@ def rrt_star(start, goal):
                         pygame.display.flip()
 
                     else:
-                        print("Added tree")
+                        # print("Added tree")
                         cleared_trees_list.append(focus_node.state)
                         focus_node.ext = 1
 
@@ -403,8 +412,8 @@ def rrt_star(start, goal):
                         # print("after deleting branches", node_dict[focus_node.state])
                         focus_nodes_list.append(best_tree[1])
                         # focus_nodes_list.append("ONEIT")
-                        print(focus_nodes_list)
-                        print(cleared_trees_list)
+                        # print(focus_nodes_list)
+                        # print(cleared_trees_list)
 
                         # if there is already a tree in the new tree start node, then we will add them to this new tree
                         try:
@@ -464,6 +473,10 @@ def rrt_star(start, goal):
 
 
 # ____________________ RRT* Algorithm _______________________
+
+# start counting time
+start_time = time.time()
+
 path = rrt_star(start, goal)
 # rrt_star(start, goal)
 
@@ -474,6 +487,10 @@ path = rrt_star(start, goal)
     # time.sleep(0.1)
 
 # ____ Draw the path ______
+#end of time 
+end_time = time.time()
+print("Time Taken ---  ",end_time - start_time)
+
 
 # ____________________ End of RRT* Algorithm _______________________
 
