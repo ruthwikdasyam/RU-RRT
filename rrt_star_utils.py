@@ -80,7 +80,7 @@ class Node:
 # _____________________ RRT* Algorithm __________________________
 def get_random_state(graph, step):
     # Select a random point
-    rand_point = (np.random.randint(0,599), np.random.randint(0,399))
+    rand_point = (np.random.randint(0,1199), np.random.randint(0,799))
     # find the nearest node to the random point
     temp_dist = []
     for i in graph:

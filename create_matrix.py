@@ -1,7 +1,10 @@
 import numpy as np
 
+width = 1200
+height = 800
+
 # crete a matrix with 600x400 dimensions, with 24 layers with empty lists
-matrix = np.empty((600, 400, 24), dtype=object)
+matrix = np.empty((width, height, 24), dtype=object)
 # insert empty lists in the matrix
 
 matrix.fill([])

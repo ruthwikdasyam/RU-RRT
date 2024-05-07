@@ -15,31 +15,31 @@ print(" Please wait, Preparing Map ..... ")
 # -- Returns value >= 1, if a point is in obstacle space
 def obstacle(x,y):
     # y=199-y 
-    if x>=60 and x<=90 and y>=230 and y<=260:   # box1
+    if x>=120 and x<=180 and y>=460 and y<=520:     # box1
         return True
-    if x>=150 and x<=152 and y>=0 and y<=180:    # line1
+    if x>=300 and x<=315 and y>=0 and y<=360:       # line1
         return True
-    if x>=210 and x<=240 and y>=60 and y<=90:   # box2.1
+    if x>=420 and x<=480 and y>=120 and y<=180:     # box2.1
         return True
-    if x>=210 and x<=240 and y>=230 and y<=260: # box2.2
+    if x>=420 and x<=480 and y>=460 and y<=520:     # box2.2
         return True       
-    if x>=300 and x<=302 and y>=120 and y<=400: # line2
+    if x>=600 and x<=615 and y>=240 and y<=800:     # line2
         return True
-    if x>=360 and x<=390 and y>=60 and y<=90:   # box3.1
+    if x>=720 and x<=780 and y>=120 and y<=180:     # box3.1
         return True
-    if x>=360 and x<=390 and y>=230 and y<=260: # box3.2
+    if x>=720 and x<=780 and y>=460 and y<=520:     # box3.2
         return True
-    if x>=450 and x<=452 and y>=0 and y<=180:    # line3
+    if x>=900 and x<=915 and y>=0 and y<=360:       # line3
         return True
-    if x>=510 and x<=540 and y>=60 and y<=90:   # box4.1
+    if x>=1020 and x<=1080 and y>=120 and y<=180:   # box4.1
         return True
-    if x>=510 and x<=540 and y>=230 and y<=260: # box4.2
+    if x>=1020 and x<=1080 and y>=460 and y<=520:   # box4.2
         return True
 
-matrix = np.zeros((600,400))         # Defining a matrix representing canvas 1200 x 500 with zeros
+matrix = np.zeros((1200,800))         # Defining a matrix representing canvas 1200 x 500 with zeros
 
-for i in range(600):                    # looping through all elements in matrix
-    for j in range(400):
+for i in range(1200):                    # looping through all elements in matrix
+    for j in range(800):
         if obstacle(i,j):               # checking if point is in obstacle space
             matrix[i,j]=1               # 1 means obstacle
 # _____________________ End of Defining Obstacle Space __________________________
@@ -60,13 +60,13 @@ grey = (150,150,150)
 red = (225,50,50)
 blue = (105,135,235)
 #initializing window
-window = pygame.display.set_mode((600,400)) # window size
+window = pygame.display.set_mode((1200,800)) # window size
 window.fill(white) # filling it with color
 
 
 # LOOP to transform matrix into this window
-for i in range(600):
-    for j in range(400):
+for i in range(1200):
+    for j in range(800):
             if matrix[i,j]==1: # 1 -> red color showing obstacles
                 window.set_at((i,j),red)
             elif matrix[i,j]==2: # 2-> black showing bloating part

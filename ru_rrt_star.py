@@ -9,6 +9,8 @@ import copy
 # # clearence = int(input(" "))
 # clearence = 5
 
+# width = 600
+# height = 400
 
 # print(" Please wait, Preparing Map ..... ")
 
@@ -25,10 +27,10 @@ import copy
 #         return False            
  
 
-# matrix = np.zeros((600,400))         # Defining a matrix representing canvas 1200 x 500 with zeros
+# matrix = np.zeros((width,height))         # Defining a matrix representing canvas 1200 x 500 with zeros
 
-# for i in range(600):                    # looping through all elements in matrix
-#     for j in range(400):
+# for i in range(width):                    # looping through all elements in matrix
+#     for j in range(height):
 #         if obstacle(i,j):               # checking if point is in obstacle space
 #             matrix[i,j]=1               # 1 means obstacle
 # # _____________________ End of Defining Obstacle Space __________________________
@@ -40,38 +42,39 @@ print("\n****************** Map *****************")
 # print("Input Clearence Value ---")
 # clearence = int(input(" "))
 clearence = 5
-
+width = 1200
+height = 800
 
 print(" Please wait, Preparing Map ..... ")
 
 # -- Returns value >= 1, if a point is in obstacle space
 def obstacle(x,y):
     # y=199-y 
-    if x>=60 and x<=90 and y>=230 and y<=260:   # box1
+    if x>=120 and x<=180 and y>=460 and y<=520:     # box1
         return True
-    if x>=150 and x<=152 and y>=0 and y<=180:    # line1
+    if x>=300 and x<=315 and y>=0 and y<=360:       # line1
         return True
-    if x>=210 and x<=240 and y>=60 and y<=90:   # box2.1
+    if x>=420 and x<=480 and y>=120 and y<=180:     # box2.1
         return True
-    if x>=210 and x<=240 and y>=230 and y<=260: # box2.2
+    if x>=420 and x<=480 and y>=460 and y<=520:     # box2.2
         return True       
-    if x>=300 and x<=302 and y>=120 and y<=400: # line2
+    if x>=600 and x<=615 and y>=240 and y<=800:     # line2
         return True
-    if x>=360 and x<=390 and y>=60 and y<=90:   # box3.1
+    if x>=720 and x<=780 and y>=120 and y<=180:     # box3.1
         return True
-    if x>=360 and x<=390 and y>=230 and y<=260: # box3.2
+    if x>=720 and x<=780 and y>=460 and y<=520:     # box3.2
         return True
-    if x>=450 and x<=452 and y>=0 and y<=180:    # line3
+    if x>=900 and x<=915 and y>=0 and y<=360:       # line3
         return True
-    if x>=510 and x<=540 and y>=60 and y<=90:   # box4.1
+    if x>=1020 and x<=1080 and y>=120 and y<=180:   # box4.1
         return True
-    if x>=510 and x<=540 and y>=230 and y<=260: # box4.2
+    if x>=1020 and x<=1080 and y>=460 and y<=520:   # box4.2
         return True
 
-matrix = np.zeros((600,400))         # Defining a matrix representing canvas 1200 x 500 with zeros
+matrix = np.zeros((1200,800))         # Defining a matrix representing canvas 1200 x 500 with zeros
 
-for i in range(600):                    # looping through all elements in matrix
-    for j in range(400):
+for i in range(1200):                    # looping through all elements in matrix
+    for j in range(800):
         if obstacle(i,j):               # checking if point is in obstacle space
             matrix[i,j]=1               # 1 means obstacle
 # _____________________ End of Defining Obstacle Space __________________________
@@ -86,13 +89,13 @@ grey = (150,150,150)
 red = (225,50,50)
 blue = (105,135,235)
 #initializing window
-window = pygame.display.set_mode((600,400)) # window size
+window = pygame.display.set_mode((width,height)) # window size
 window.fill(white) # filling it with color
 
 
 # LOOP to transform matrix into this window
-for i in range(600):
-    for j in range(400):
+for i in range(width):
+    for j in range(height):
             if matrix[i,j]==1: # 1 -> red color showing obstacles
                 window.set_at((i,j),red)
             elif matrix[i,j]==2: # 2-> black showing bloating part
@@ -107,7 +110,7 @@ pygame.display.flip() #updating window
 
 #-------------------------------------------------------------------------
 # Creating local flow matrix
-local_matrix = np.empty((600,400), dtype=object)
+local_matrix = np.empty((width,height), dtype=object)
 # make all elements of local_matrix as empty arrays
 local_matrix.fill([])
 
@@ -119,7 +122,7 @@ query_trees = np.load('query_trees.npy', allow_pickle=True)
 
 # _____________________ Defining Start and Goal __________________________
 
-start = (50,350)
+start = (100,350)
 goal = (500,150)
 # print("Error") if matrix[start[0], start[1]]!=0 or matrix[goal[0], goal[1]]!=0 else None
 node_radius = 15
@@ -203,7 +206,7 @@ def rrt_star(start, goal):
         # find new point in corresponding direction
         
         # check if the point is in obstacle space and continue if true
-        if not 0<= rand_point1[0] < 600 or not 0<= rand_point1[1] < 400:
+        if not 0<= rand_point1[0] < width or not 0<= rand_point1[1] < height:
             continue
 
         # check if the point is in obstacle space and continue if true
@@ -352,7 +355,7 @@ def rrt_star(start, goal):
                 # get list of all states in the flow check radius fom the focus state
                 for i in range(focus_state[0]-flow_check_radius, focus_state[0]+flow_check_radius):
                     for j in range(focus_state[1]-flow_check_radius, focus_state[1]+flow_check_radius):
-                        if 0<=i<600 and 0<=j<400:
+                        if 0<=i<width and 0<=j<height:
                             radius = np.sqrt((i-focus_state[0])**2 + (j-focus_state[1])**2)
                             if radius <= flow_check_radius:
                               if len(global_matrix[i, j, focus_node_flow_]) !=0:
@@ -487,8 +490,8 @@ np.save('query_trees.npy', query_trees)
 # global_matrix = np.load('flow_matrix.npy')
 contributions = 0
 
-for i in range(600):
-    for j in range(400):
+for i in range(width):
+    for j in range(height):
         if len(local_matrix[i,j]) !=0 : # if the local matrix is not empty
             contributions += 1
             k = local_matrix[i,j][0]//15 # quotient of the flow value
