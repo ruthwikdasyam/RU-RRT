@@ -2,7 +2,39 @@ from rrt_star_utils import *
 import copy
 
 
-# _____________________ Defining Obstacle Space __________________________
+# # _____________________ Defining Obstacle Space - Type 1 __________________________
+# print("\n****************** Map *****************")
+
+# # print("Input Clearence Value ---")
+# # clearence = int(input(" "))
+# clearence = 5
+
+
+# print(" Please wait, Preparing Map ..... ")
+
+# # -- Returns value >= 1, if a point is in obstacle space
+# def obstacle(x,y):
+#     # y=199-y 
+#     if x >= 150 and x < 175 and y >= 200:  
+#         return True             # 1st obstacle
+#     if x >= 250 and x < 275 and y < 100:
+#         return True             # 2nd obstacle
+#     if (x - 420)**2 + (y-120)**2 <= 3600:  
+#         return True             # equations for lines that surround polygon
+#     else: 
+#         return False            
+ 
+
+# matrix = np.zeros((600,400))         # Defining a matrix representing canvas 1200 x 500 with zeros
+
+# for i in range(600):                    # looping through all elements in matrix
+#     for j in range(400):
+#         if obstacle(i,j):               # checking if point is in obstacle space
+#             matrix[i,j]=1               # 1 means obstacle
+# # _____________________ End of Defining Obstacle Space __________________________
+
+
+# _____________________ Defining Obstacle Space - Type 2 __________________________
 print("\n****************** Map *****************")
 
 # print("Input Clearence Value ---")
@@ -15,15 +47,26 @@ print(" Please wait, Preparing Map ..... ")
 # -- Returns value >= 1, if a point is in obstacle space
 def obstacle(x,y):
     # y=199-y 
-    if x >= 150 and x < 175 and y >= 200:  
-        return True             # 1st obstacle
-    if x >= 250 and x < 275 and y < 100:
-        return True             # 2nd obstacle
-    if (x - 420)**2 + (y-120)**2 <= 3600:  
-        return True             # equations for lines that surround polygon
-    else: 
-        return False            
- 
+    if x>=60 and x<=90 and y>=230 and y<=260:   # box1
+        return True
+    if x>=150 and x<=152 and y>=0 and y<=180:    # line1
+        return True
+    if x>=210 and x<=240 and y>=60 and y<=90:   # box2.1
+        return True
+    if x>=210 and x<=240 and y>=230 and y<=260: # box2.2
+        return True       
+    if x>=300 and x<=302 and y>=120 and y<=400: # line2
+        return True
+    if x>=360 and x<=390 and y>=60 and y<=90:   # box3.1
+        return True
+    if x>=360 and x<=390 and y>=230 and y<=260: # box3.2
+        return True
+    if x>=450 and x<=452 and y>=0 and y<=180:    # line3
+        return True
+    if x>=510 and x<=540 and y>=60 and y<=90:   # box4.1
+        return True
+    if x>=510 and x<=540 and y>=230 and y<=260: # box4.2
+        return True
 
 matrix = np.zeros((600,400))         # Defining a matrix representing canvas 1200 x 500 with zeros
 
@@ -32,7 +75,6 @@ for i in range(600):                    # looping through all elements in matrix
         if obstacle(i,j):               # checking if point is in obstacle space
             matrix[i,j]=1               # 1 means obstacle
 # _____________________ End of Defining Obstacle Space __________________________
-
 
 
 # ____________________ Display Pygame Window _______________________
@@ -77,7 +119,7 @@ query_trees = np.load('query_trees.npy', allow_pickle=True)
 
 # _____________________ Defining Start and Goal __________________________
 
-start = (100,350)
+start = (50,350)
 goal = (500,150)
 # print("Error") if matrix[start[0], start[1]]!=0 or matrix[goal[0], goal[1]]!=0 else None
 node_radius = 15
